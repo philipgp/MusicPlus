@@ -1,0 +1,5 @@
+#org.springsource.ide.eclipse.gradle.core.preferences.GradleProjectPreferences
+#Mon May 01 21:16:01 AST 2017
+build.family.org.gradle.tooling.model.eclipse.HierarchicalEclipseProject=;gracenote-gnsdkclient;musicfile-manager;
+org.springsource.ide.eclipse.gradle.linkedresources=
+org.springsource.ide.eclipse.gradle.rootprojectloc=
