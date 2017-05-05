@@ -1,0 +1,9 @@
+dependencies {
+// https://mvnrepository.com/artifact/net.sf/jid3lib
+compile group: 'net.sf', name: 'jid3lib', version: '0.5.4'
+	
+// https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.5'
+
+
+}
