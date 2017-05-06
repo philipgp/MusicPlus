@@ -1,4 +1,4 @@
-package org.philipgp.musicplus;
+package org.philipgp.musicplus.gracenote;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -1,4 +1,4 @@
-package org.philipgp.musicplus;
+package org.philipgp.musicplus.gracenote;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -14,6 +14,7 @@ import com.gracenote.gnsdk.GnMusicIdFileInfo;
 import com.gracenote.gnsdk.GnResponseAlbums;
 import com.gracenote.gnsdk.GnResponseDataMatches;
 import com.gracenote.gnsdk.GnStatus;
+import com.gracenote.gnsdk.GnTrack;
 import com.gracenote.gnsdk.IGnCancellable;
 import com.gracenote.gnsdk.IGnMusicIdFileEvents;
 import com.gracenote.gnsdk.IGnStatusEvents;
@@ -21,6 +22,13 @@ import com.gracenote.gnsdk.IGnStatusEvents;
 class MusicIDFileEvents implements IGnMusicIdFileEvents, IGnStatusEvents {
 	final static int BUFFER_READ_SIZE = 1024; 
 	
+	public TrackIdCallBack trackIdCallBack;
+	
+	public MusicIDFileEvents(TrackIdCallBack trackIdCallBack) {
+		super();
+		this.trackIdCallBack = trackIdCallBack;
+	}
+
 	@Override
 	public void
 	statusEvent( GnStatus status, long percent_complete, long bytes_total_sent, long bytes_total_received, IGnCancellable canceller ) {
@@ -74,8 +82,9 @@ class MusicIDFileEvents implements IGnMusicIdFileEvents, IGnStatusEvents {
 	public void
 	musicIdFileAlbumResult( GnResponseAlbums album_result, long current_album, long total_albums, IGnCancellable canceller ) {
 		System.out.println( "\n*Album " + current_album + " of " + total_albums + "*\n" );
-
+		
 		try {
+			trackIdCallBack.handle(album_result);
 			displayResult(album_result);
 		} catch ( GnException gnException ) {
 			System.out.println("GnException \t" + gnException.getMessage());
@@ -88,9 +97,11 @@ class MusicIDFileEvents implements IGnMusicIdFileEvents, IGnStatusEvents {
 
 		int matchCounter = 0;
 		GnAlbumIterator itr = response.albums().getIterator();
-
+		
 		while ( itr.hasNext() ) {
 			GnAlbum album = itr.next();
+			GnTrack trackMatched = album.trackMatched();
+			System.out.println(trackMatched.title().display());
 			System.out.println( "\tMatch " + ++matchCounter + " - Album Title:\t" + album.title().display()+" artis"+album.artist().name().display() );
 		}
 	}
