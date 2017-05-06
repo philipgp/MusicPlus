@@ -1,6 +1,7 @@
 package musicplus.musicfilemanager.music.mp3.id3;
 
 import org.farng.mp3.AbstractMP3FragmentBody;
+import org.farng.mp3.TagUtility;
 import org.farng.mp3.id3.AbstractID3v2Frame;
 
 public class Id3FrameWrapper {
@@ -14,9 +15,17 @@ public class Id3FrameWrapper {
 		super();
 		id3V2Frame = id3v2Frame;
 	}
+	public Id3FrameWrapper(){
+		
+	}
+	public void setKey(String key){
+		AbstractMP3FragmentBody body = id3V2Frame.getBody();
+		body.setObject("identifier", key);
+	}
 	public String getKey(){
 		return id3V2Frame.getIdentifier();
 	}
+	
 	public void setText(String text){
 		AbstractMP3FragmentBody body = id3V2Frame.getBody();
 		if(body !=null){

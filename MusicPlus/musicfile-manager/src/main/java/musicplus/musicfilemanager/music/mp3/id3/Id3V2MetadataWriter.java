@@ -12,8 +12,10 @@ public class Id3V2MetadataWriter implements MetadataWriter{
 	@Override
 	public void saveMetaData(MusicMetadata metaData) {
 		id3V2Wrapper.setKnownTagValue(Id3KnownTagNames.ARTIST, metaData.getArtist());
+		id3V2Wrapper.setKnownTagValue(Id3KnownTagNames.BAND, metaData.getArtist());
 		id3V2Wrapper.setKnownTagValue(Id3KnownTagNames.ALBUM, metaData.getAlbum());
 		id3V2Wrapper.setKnownTagValue(Id3KnownTagNames.YEAR, metaData.getYear());
+		id3V2Wrapper.setKnownTagValue(Id3KnownTagNames.GRACENOTE_ID, metaData.getGracenoteId());
 		id3V2Wrapper.setKnownTagValue(Id3KnownTagNames.TITLE, metaData.getTitle());
 	}
 

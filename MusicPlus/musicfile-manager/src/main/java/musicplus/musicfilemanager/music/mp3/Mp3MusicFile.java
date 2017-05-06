@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 
 import org.farng.mp3.MP3File;
+import org.farng.mp3.TagConstant;
 import org.farng.mp3.TagException;
+import org.farng.mp3.TagOptionSingleton;
 import org.farng.mp3.id3.AbstractID3v1;
 import org.farng.mp3.id3.AbstractID3v2;
 
@@ -32,11 +34,22 @@ public class Mp3MusicFile implements IMusicFile{
 		AbstractID3v1 id3V1Tag = mp3File.getID3v1Tag();
 		Mp3MusicMetadataWriter metaDatawriter = new Mp3MusicMetadataWriter(id3V2Tag, id3V1Tag);
 		metaDatawriter.saveMetaData(metaData);
+		
+		//TagOptionSingleton.getInstance().setId3v2SaveEmptyFrame(true);
+		
+		//TagOptionSingleton.getInstance().setOriginalSavedAfterAdjustingID3v2Padding(false);
+		
 		try {
-			mp3File.save();
+			mp3File.save(TagConstant.MP3_FILE_SAVE_OVERWRITE);
+			
 		} catch (IOException | TagException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
+	@Override
+	public File getFile() {
+
+		return mp3File.getMp3file();
+	}
 }
+
