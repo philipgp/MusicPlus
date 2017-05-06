@@ -1,0 +1,4 @@
+dependencies {
+compile project(':musicfile-manager')
+compile project(':gracenote-gnsdkclient')
+}
