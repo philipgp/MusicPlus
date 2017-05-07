@@ -15,4 +15,11 @@
 		<nature>org.springsource.ide.eclipse.gradle.core.nature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>src/org</name>
+			<type>2</type>
+			<location>/home/philip/Downloads/jid3lib-0.5.4/src/org</location>
+		</link>
+	</linkedResources>
 </projectDescription>

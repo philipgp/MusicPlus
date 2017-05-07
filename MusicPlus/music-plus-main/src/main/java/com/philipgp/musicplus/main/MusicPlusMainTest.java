@@ -2,6 +2,8 @@ package com.philipgp.musicplus.main;
 
 import java.io.File;
 
+import org.farng.mp3.TagConstant;
+import org.farng.mp3.TagOptionSingleton;
 import org.philipgp.musicplus.gracenote.GracenoteClient;
 
 import musicplus.musicfilemanager.music.IMusicFile;
@@ -10,8 +12,9 @@ import musicplus.musicfilemanager.music.converter.MusicFileConvertor;
 import musicplus.musicfilemanager.music.mp3.Mp3MusicFile;
 
 public class MusicPlusMainTest {
-	public static void main(String[] a) throws Exception{
-		
+	public static void main(String[] a) throws Exception{ 
+		TagOptionSingleton.getInstance().setDefaultSaveMode(TagConstant.MP3_FILE_SAVE_OVERWRITE);
+		TagOptionSingleton.getInstance().setOriginalSavedAfterAdjustingID3v2Padding(false);
 		GracenoteClient gracenoteClient = new GracenoteClient();
 		String fileName = 	"/home/philip/music";
 		File file = new File(fileName);

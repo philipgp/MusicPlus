@@ -22,10 +22,21 @@ public class MusicMetadata {
 	private final static String RECORDING_DATE_KEY="__RECORDING_DATE";
 	private final static String GRACENOTE_ID_KEY="__GRACENOTE_ID";
 	private final static String MOOD_KEY="__MOOD";
+	private final static String GENRE_KEY="__GENRE";
 	private HashMap<String,String> map  = new HashMap<>();
 	
 	
 	//private String artist,album,title,year,comments,playCounter,bpm,composer,contentType,lyricist,length,band,conductor,trackNumber,recordingDate,gracenoteId,mood;
+	
+	//private String genre;
+	public String getGenre() {
+		return map.get(GENRE_KEY);
+	}
+
+	public void setGenre(String genre) {
+		map.put(GENRE_KEY, genre);
+	}
+
 	public HashMap<String, String> getMap() {
 		return map;
 	}

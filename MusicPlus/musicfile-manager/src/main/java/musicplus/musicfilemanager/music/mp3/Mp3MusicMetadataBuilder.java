@@ -9,8 +9,8 @@ import org.farng.mp3.id3.ID3v2_3;
 
 import musicplus.musicfilemanager.music.MetadataReader;
 import musicplus.musicfilemanager.music.metadata.MusicMetadata;
-import musicplus.musicfilemanager.music.mp3.id3.ID3v2Wrapper;
-import musicplus.musicfilemanager.music.mp3.id3.Id3V2MetaDataReader;
+import musicplus.musicfilemanager.music.mp3.id3.v2.ID3v2Wrapper;
+import musicplus.musicfilemanager.music.mp3.id3.v2.Id3V2MetaDataReader;
 
 public class Mp3MusicMetadataBuilder implements MetadataReader{
 	private AbstractID3v2 id3V2Tag;

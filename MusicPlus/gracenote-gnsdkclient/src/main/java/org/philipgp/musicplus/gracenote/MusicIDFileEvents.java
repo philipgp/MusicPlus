@@ -84,8 +84,9 @@ class MusicIDFileEvents implements IGnMusicIdFileEvents, IGnStatusEvents {
 		System.out.println( "\n*Album " + current_album + " of " + total_albums + "*\n" );
 		
 		try {
-			trackIdCallBack.handle(album_result);
+			
 			displayResult(album_result);
+			trackIdCallBack.handle(album_result);
 		} catch ( GnException gnException ) {
 			System.out.println("GnException \t" + gnException.getMessage());
 		}
