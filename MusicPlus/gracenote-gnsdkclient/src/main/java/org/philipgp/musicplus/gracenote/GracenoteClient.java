@@ -58,7 +58,9 @@ public class GracenoteClient {
 		GnMusicIdFile midf;
 		try {
 			midf = new GnMusicIdFile( gnUser, new MusicIDFileEvents(trackIdCallBack));
+			
 			fileInfo = midf.fileInfos().add("1" );
+			
 			
 			// Set data for this file information instance.
 			// This only sets file path but all available data
@@ -68,7 +70,7 @@ public class GracenoteClient {
 			fileInfo.fileName(musicFile.getFile().getAbsolutePath() );
 			
 			midf.doTrackId(GnMusicIdFileProcessType.kQueryReturnSingle, GnMusicIdFileResponseType.kResponseAlbums);
-			System.out.println(fileInfo.trackArtist());
+		//	System.out.println(fileInfo.trackArtist());
 		} catch (GnException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

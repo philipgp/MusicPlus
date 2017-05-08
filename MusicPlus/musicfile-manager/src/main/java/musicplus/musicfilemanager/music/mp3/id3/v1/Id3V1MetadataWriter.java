@@ -20,7 +20,7 @@ public class Id3V1MetadataWriter implements MetadataWriter{
 		id3V1Wrapper.setKnownTagValue(Id3KnownTagNames.TITLE, metaData.getTitle());
 		id3V1Wrapper.setKnownTagValue(Id3KnownTagNames.YEAR, metaData.getYear());
 		id3V1Wrapper.setKnownTagValue(Id3KnownTagNames.COMMENTS, metaData.getComments());
-		id3V1Wrapper.setKnownTagValue(Id3KnownTagNames.GENRE, metaData.getGenre());
+		id3V1Wrapper.setKnownTagValue(Id3KnownTagNames.GENRE, Id3v1GenreMapper.getGenreCode(metaData.getGenre()));
 		
 	}
 

@@ -3,9 +3,10 @@ subprojects {
     apply plugin: 'eclipse'
 
     repositories {
+    mavenLocal()
        mavenCentral()
         maven {
-        url 'https://artifacts.alfresco.com/nexus/content/repositories/public'
+        url 'http://clojars.org/repo/'
     }
        
     }

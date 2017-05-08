@@ -34,7 +34,7 @@ public class GracenoteMetaDataReader implements MetadataReader {
 	private void setGenre(MusicMetadata metadata,GnTrack matchedTrack ){
 		String genreLevel1 = matchedTrack.genre(GnDataLevel.kDataLevel_1);
 		if(StringUtils.isNotEmpty(genreLevel1)){
-
+			metadata.setGenre(genreLevel1);
 			String genreLevel2 = matchedTrack.mood(GnDataLevel.kDataLevel_2);
 			if(StringUtils.isNotEmpty(genreLevel2)){
 
@@ -56,7 +56,7 @@ public class GracenoteMetaDataReader implements MetadataReader {
 			musicMetadata.setTitle(matchedTrack.title().display());
 			musicMetadata.setTrackNumber(matchedTrack.trackNumber());
 			musicMetadata.setGracenoteId(matchedTrack.gnId());
-
+			
 			GnContentIterable contents = matchedTrack.contents();
 			GnContentIterator iterator = contents.getIterator();
 			setMood(musicMetadata, matchedTrack);

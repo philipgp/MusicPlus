@@ -1,2 +1,2 @@
 
-include "gracenote-gnsdkclient", "musicfile-manager"
+include "music-plus-main","gracenote-gnsdkclient", "musicfile-manager","common"

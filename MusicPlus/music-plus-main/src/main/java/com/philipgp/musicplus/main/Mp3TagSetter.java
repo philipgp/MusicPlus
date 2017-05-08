@@ -34,7 +34,7 @@ public class Mp3TagSetter implements TrackIdCallBack {
 				e.printStackTrace();
 			}
 			Integer matchConfidence = 0; 
-			Integer threshold = 50;
+			Integer threshold = 10;
 			if(album.trackMatched()!=null)
 				matchConfidence= new Long(album.trackMatched().matchScore()).intValue();
 			logger.debug("match confidence:{},threshold:{}",matchConfidence,threshold);
