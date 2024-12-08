@@ -135,6 +135,7 @@ class PlaylistModel : ViewModel(), PlaybackService.Callback by EmptyPBSCallback 
     fun play(position: Int) = service?.playIndex(position)
 
     fun togglePlayPause() = service?.run{
+
         if (isPlaying) pause() else play()
     }
 

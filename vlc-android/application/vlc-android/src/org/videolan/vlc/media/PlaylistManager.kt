@@ -21,6 +21,12 @@ import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.videolan.libvlc.FactoryManager
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.RendererItem
@@ -92,10 +98,13 @@ import org.videolan.vlc.util.setResumeProgram
 import org.videolan.vlc.util.updateNextProgramAfterThumbnailGeneration
 import org.videolan.vlc.util.updateWithMLMeta
 import org.videolan.vlc.util.validateLocation
+import java.net.URL
 import java.security.SecureRandom
 import java.util.Calendar
 import java.util.Stack
+import java.util.concurrent.TimeUnit
 import kotlin.math.max
+
 
 private const val TAG = "VLC/PlaylistManager"
 private const val PREVIOUS_LIMIT_DELAY = 5000L
@@ -355,8 +364,30 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
         }
     }
 
+    fun sendForAnalytics(){
+        try {
+            val url = URL("http://musick.lifekit.site/progress")
+            val client = OkHttpClient.Builder()
+                .readTimeout(10, TimeUnit.SECONDS)
+                .connectTimeout(5, TimeUnit.SECONDS).build()
+            val trackUid = getCurrentMedia()!!.id
+            val length = getCurrentMedia()!!.length
+            val position = getCurrentMedia()!!.position
+            val progressPercent = position/length*100
+            val json = "{\"uid\":$trackUid,\"progressPercent\":\"$progressPercent\"}"
+            val body = json.toRequestBody("application/json".toMediaTypeOrNull())
+            val request = Request.Builder().url(url).post(body).build()
+            val call = client.newCall(request)
+            val response = call.execute()
+            Log.i(TAG, "Response message :"+response.message+"--- status"+response.code)
+
+        }catch (e: Exception) {
+            VLCCrashHandler.saveLog(e, "Exception in PlaylistManager sendForAnalytics")
+        }
+    }
     @MainThread
     fun next(force : Boolean = false) {
+        sendForAnalytics()
         mediaList.getMedia(currentIndex)?.let { if (it.type == MediaWrapper.TYPE_VIDEO) saveMediaMeta() }
         val size = mediaList.size()
         if (force || repeating.value != PlaybackStateCompat.REPEAT_MODE_ONE) {
