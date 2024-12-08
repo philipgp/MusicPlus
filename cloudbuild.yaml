@@ -3,11 +3,6 @@ steps:
     args: [ 'buildx', 'create', '--name', 'mybuilder', '--use' ]
   - name: 'docker'
     args: [ 'buildx', 'build', '--platform', 'linux/arm64', '-t', 'us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/music-plus-click-stream:${SHORT_SHA}', '--push', 'click-stream-processor', ]
-  #- name: 'gcr.io/cloud-builders/docker'
-   # args: ['build', '-t', 'us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/music-plus-click-stream:${SHORT_SHA}', 'click-stream-processor']
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'push-container-image-web-api'
-    args: ['push', 'us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/music-plus-click-stream:${SHORT_SHA}']
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: /bin/sh
     args:
