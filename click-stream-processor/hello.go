@@ -24,6 +24,11 @@ type trackProgress struct {
 	StartTime       string `json:"startTime"`
 	EndTime         string `json:"endTime"`
 	EventTime       string `json:"eventTime"`
+	Title           string `json:"title"`
+	Uri            string `json:"uri"`
+	AlbumArtist     string `json:"albumArtist"`
+	Artist            string `json:"artist"`
+	Album            string `json:"album"`
 }
 
 func connectToDB() {
@@ -55,7 +60,7 @@ func saveProgressToDB(ctx context.Context, TrackProgress trackProgress) (int64, 
 	}
 	defer tx.Rollback()
 	// log.Fatalf("Inserting data")
-	result, err := db.Exec("INSERT INTO track_play_progress (uid,fingerprint,progressPercent) VALUES (?, ?, ?)", TrackProgress.UID, TrackProgress.FingerPrint, TrackProgress.ProgressPercent)
+	result, err := db.Exec("INSERT INTO track_play_progress (uid,fingerprint,progressPercent,album,artist,title,albumArtist) VALUES (?, ?, ?,?,?,?,?)", TrackProgress.UID, TrackProgress.FingerPrint, TrackProgress.ProgressPercent,TrackProgress.Album,TrackProgress.Artist,TrackProgress.Title,TrackProgress.AlbumArtist)
 	// log.Fatalf("inserted data ")
 	if err != nil {
 		return 0, fmt.Errorf("saveProgressToDB: %v", err)

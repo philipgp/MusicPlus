@@ -98,12 +98,15 @@ import org.videolan.vlc.util.setResumeProgram
 import org.videolan.vlc.util.updateNextProgramAfterThumbnailGeneration
 import org.videolan.vlc.util.updateWithMLMeta
 import org.videolan.vlc.util.validateLocation
+import java.io.File
 import java.net.URL
+import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Calendar
 import java.util.Stack
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 
 private const val TAG = "VLC/PlaylistManager"
@@ -364,17 +367,31 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
         }
     }
 
-    fun sendForAnalytics(){
+    @OptIn(ExperimentalStdlibApi::class)
+    fun File.sha256(): String {
+        val md = MessageDigest.getInstance("SHA256")
+        val digest = md.digest(this.readBytes())
+        return digest.toHexString()
+    }
+
+    fun sendForAnalytics(playerProgress: Long){
         try {
             val url = URL("http://musick.lifekit.site/progress")
             val client = OkHttpClient.Builder()
                 .readTimeout(10, TimeUnit.SECONDS)
                 .connectTimeout(5, TimeUnit.SECONDS).build()
-            val trackUid = getCurrentMedia()!!.id
-            val length = getCurrentMedia()!!.length
-            val position = getCurrentMedia()!!.position
+            val path = getCurrentMedia()!!.uri.path.toString()
+            val file = File(path)
+            val calculatedHash = file.sha256()
+            val length = getCurrentMedia()!!.length.toFloat()
+            val artist = getCurrentMedia()!!.artist.toString()
+            val albumArtist = getCurrentMedia()!!.albumArtist.toString()
+            val album = getCurrentMedia()!!.album.toString()
+            val title = getCurrentMedia()!!.title.toString()
+            val position = playerProgress.toFloat()
             val progressPercent = position/length*100
-            val json = "{\"uid\":$trackUid,\"progressPercent\":\"$progressPercent\"}"
+            val roundedProgress = progressPercent.roundToInt()
+            val json = "{\"album\":\"$album\",\"uri\":\"$path\",\"albumArtist\":\"$albumArtist\",\"title\":\"$title\",\"artist\":\"$artist\",\"fingerprint\":\"$calculatedHash\",\"progressPercent\":$roundedProgress}"
             val body = json.toRequestBody("application/json".toMediaTypeOrNull())
             val request = Request.Builder().url(url).post(body).build()
             val call = client.newCall(request)
@@ -387,7 +404,9 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
     }
     @MainThread
     fun next(force : Boolean = false) {
-        sendForAnalytics()
+        val progress = player.progress.value!!.time
+
+        launch(Dispatchers.IO) {sendForAnalytics(progress)}
         mediaList.getMedia(currentIndex)?.let { if (it.type == MediaWrapper.TYPE_VIDEO) saveMediaMeta() }
         val size = mediaList.size()
         if (force || repeating.value != PlaybackStateCompat.REPEAT_MODE_ONE) {
