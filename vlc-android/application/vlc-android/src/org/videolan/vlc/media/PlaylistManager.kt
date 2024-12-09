@@ -21,11 +21,9 @@ import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.videolan.libvlc.FactoryManager
 import org.videolan.libvlc.MediaPlayer
@@ -374,20 +372,20 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
         return digest.toHexString()
     }
 
-    fun sendForAnalytics(playerProgress: Long){
+    fun sendForAnalytics(playerProgress: Long, currentMedia: MediaWrapper?){
         try {
             val url = URL("http://musick.lifekit.site/progress")
             val client = OkHttpClient.Builder()
                 .readTimeout(10, TimeUnit.SECONDS)
                 .connectTimeout(5, TimeUnit.SECONDS).build()
-            val path = getCurrentMedia()!!.uri.path.toString()
+            val path = currentMedia!!.uri.path.toString()
             val file = File(path)
             val calculatedHash = file.sha256()
-            val length = getCurrentMedia()!!.length.toFloat()
-            val artist = getCurrentMedia()!!.artist.toString()
-            val albumArtist = getCurrentMedia()!!.albumArtist.toString()
-            val album = getCurrentMedia()!!.album.toString()
-            val title = getCurrentMedia()!!.title.toString()
+            val length = currentMedia.length.toFloat()
+            val artist = currentMedia.artist.toString()
+            val albumArtist = currentMedia.albumArtist.toString()
+            val album = currentMedia.album.toString()
+            val title = currentMedia.title.toString()
             val position = playerProgress.toFloat()
             val progressPercent = position/length*100
             val roundedProgress = progressPercent.roundToInt()
@@ -406,7 +404,9 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
     fun next(force : Boolean = false) {
         val progress = player.progress.value!!.time
 
-        launch(Dispatchers.IO) {sendForAnalytics(progress)}
+        val currentMedia = getCurrentMedia()
+
+        launch(Dispatchers.IO) {sendForAnalytics(progress,currentMedia)}
         mediaList.getMedia(currentIndex)?.let { if (it.type == MediaWrapper.TYPE_VIDEO) saveMediaMeta() }
         val size = mediaList.size()
         if (force || repeating.value != PlaybackStateCompat.REPEAT_MODE_ONE) {
