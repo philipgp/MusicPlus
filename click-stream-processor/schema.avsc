@@ -1,0 +1,54 @@
+{
+  "type": "record",
+  "name": "Avro",
+  "fields": [
+    {
+      "name": "fingerprint",
+      "type": "string"
+    },
+    {
+      "name": "uid",
+      "type": "string"
+    },
+    {
+      "name": "event",
+      "type": "string"
+    },
+    {
+      "name": "startTime",
+      "type": "string"
+    },
+    {
+      "name": "endTime",
+      "type": "string"
+    },
+    {
+      "name": "eventTime",
+      "type": "string"
+    },
+    {
+      "name": "title",
+      "type": "string"
+    },
+    {
+      "name": "uri",
+      "type": "string"
+    },
+    {
+      "name": "albumArtist",
+      "type": "string"
+    },
+    {
+      "name": "artist",
+      "type": "string"
+    },
+    {
+      "name": "album",
+      "type": "string"
+    },
+    {
+      "name": "progressPercent",
+      "type": "int"
+    }
+  ]
+}
