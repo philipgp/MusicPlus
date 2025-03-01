@@ -34,7 +34,7 @@ type trackProgress struct {
 }
 
 func connectToDB() {
-	// Capture connection properties.
+	// Capture connection properties.2
 	cfg := mysql.Config{
 		User:   os.Getenv("MY_SQL_USERNAME"),
 		Passwd: os.Getenv("MY_SQL_PASSWORD"),
