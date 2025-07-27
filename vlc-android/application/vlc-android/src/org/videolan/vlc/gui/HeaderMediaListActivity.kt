@@ -23,10 +23,14 @@
 
 package org.videolan.vlc.gui
 
+import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap.CompressFormat
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.os.Environment.DIRECTORY_MUSIC
 import android.os.Parcelable
 import android.util.Log
 import android.view.Menu
@@ -50,6 +54,10 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.videolan.medialibrary.interfaces.Medialibrary
 import org.videolan.medialibrary.interfaces.media.*
 import org.videolan.medialibrary.media.MediaLibraryItem
@@ -71,6 +79,7 @@ import org.videolan.vlc.gui.helpers.UiTools
 import org.videolan.vlc.gui.helpers.UiTools.addToPlaylist
 import org.videolan.vlc.gui.helpers.UiTools.createShortcut
 import org.videolan.vlc.gui.helpers.UiTools.showPinIfNeeded
+import org.videolan.vlc.gui.helpers.hf.StoragePermissionsDelegate.Companion.getWritePermission
 import org.videolan.vlc.gui.view.RecyclerSectionItemDecoration
 import org.videolan.vlc.interfaces.Filterable
 import org.videolan.vlc.interfaces.IEventsHandler
@@ -84,8 +93,13 @@ import org.videolan.vlc.util.FileUtils
 import org.videolan.vlc.viewmodels.PlaylistModel
 import org.videolan.vlc.viewmodels.mobile.PlaylistViewModel
 import org.videolan.vlc.viewmodels.mobile.getViewModel
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
 import java.security.SecureRandom
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.math.min
 
 open class HeaderMediaListActivity : AudioPlayerContainerActivity(), IEventsHandler<MediaLibraryItem>, IListEventsHandler, ActionMode.Callback, View.OnClickListener, CtxActionReceiver, Filterable, SearchView.OnQueryTextListener, MenuItem.OnActionExpandListener {
@@ -174,6 +188,10 @@ open class HeaderMediaListActivity : AudioPlayerContainerActivity(), IEventsHand
         binding.btnAddPlaylist.setOnClickListener {
             viewModel.playlist?.let { addToPlaylist(it.tracks.toList()) }
         }
+        binding.refreshBtn.setOnClickListener {
+//            viewModel.playlist?.
+            viewModel.playlist?.let { lifecycleScope.launch(Dispatchers.IO) {reload()} }
+        }
 
         binding.btnFavorite.setOnClickListener {
             lifecycleScope.launch {
@@ -205,6 +223,7 @@ open class HeaderMediaListActivity : AudioPlayerContainerActivity(), IEventsHand
                 val width = if (binding.backgroundView.width > 0) binding.backgroundView.width else context.getScreenWidth()
                 if (!playlist.artworkMrl.isNullOrEmpty()) {
                     AudioUtil.fetchCoverBitmap(Uri.decode(playlist.artworkMrl), width)
+
                 } else if (playlist is Album) {
                     showBackground = false
                     UiTools.getDefaultAlbumDrawableBig(this@HeaderMediaListActivity).bitmap
@@ -229,6 +248,41 @@ open class HeaderMediaListActivity : AudioPlayerContainerActivity(), IEventsHand
         audioBrowserAdapter.areSectionsEnabled = false
         binding.browserFastScroller.attachToCoordinator(binding.appbar, binding.coordinator, null)
         binding.browserFastScroller.setRecyclerView(binding.songs, viewModel.tracksProvider)
+    }
+
+    fun reload(){
+        val client = OkHttpClient.Builder()
+            .readTimeout(15, TimeUnit.SECONDS)
+            .connectTimeout(15, TimeUnit.SECONDS).build()
+        val request = Request.Builder().url("http://ml-predictor.organizer.lifekit.site/build-playlist").get().build()
+        val call = client.newCall(request)
+        val response = call.execute()
+        Log.i(TAG, "Response message :"+response.message+"--- status"+response.code)
+        val responsebody = response.body!!.string()
+        var out: OutputStream? = null
+        try {
+            val file =  File(Environment.getExternalStoragePublicDirectory(DIRECTORY_MUSIC).path+"/out.m3u")
+//            val file = File("/storage/emulated/0/Download/path.m3u")
+            if (file.exists() && file.length() > 0)
+                return
+//            val fileOutputStream = openFileOutput(file.path, Context.MODE_PRIVATE)
+//            fileOutputStream.write(responsebody.toByteArray())
+//            fileOutputStream.close()
+//            Environment.getExternalStorageDirectory()
+
+
+
+                FileOutputStream(file).use { output ->
+                    output.write(responsebody.toByteArray())
+                }
+
+//            out = BufferedOutputStream(FileOutputStream(file), 4096)
+//            bitmap?.compress(CompressFormat.JPEG, 90, out)
+        } catch (e: Exception) {
+            Log.e(AudioUtil.TAG, "writeBitmap failed : " + e.message)
+        } finally {
+            CloseableUtils.close(out)
+        }
     }
 
     override fun onResume() {
@@ -549,6 +603,7 @@ open class HeaderMediaListActivity : AudioPlayerContainerActivity(), IEventsHand
 
     override fun onClick(v: View) {
         MediaUtils.playTracks(this, viewModel.tracksProvider, 0)
+
     }
 
     private suspend fun removeFromPlaylist(list: List<MediaWrapper>, indexes: List<Int>) {

@@ -177,6 +177,19 @@
                             vlc:layout_constraintBottom_toBottomOf="parent"
                             vlc:layout_constraintStart_toStartOf="parent"
                             vlc:layout_constraintTop_toBottomOf="@+id/barrier" />
+                    <Button
+                        android:id="@+id/refresh_btn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/default_margin"
+                        android:layout_marginTop="@dimen/half_default_margin"
+                        android:layout_marginEnd="@dimen/default_margin"
+                        android:layout_marginBottom="@dimen/default_margin"
+                        android:text="@string/refresh"
+                        vlc:layout_constraintBottom_toBottomOf="@id/play_btn"
+                        vlc:layout_constraintStart_toEndOf="@+id/play_btn"
+                        vlc:layout_constraintTop_toTopOf="@id/play_btn"
+                        vlc:layout_constraintTop_toBottomOf="@+id/barrier" />
 
                     <ImageView
                             android:id="@+id/btn_add_playlist"
@@ -187,9 +200,9 @@
                             android:contentDescription="@string/add_to_playlist"
                             android:foreground="?attr/selectableItemBackgroundBorderless"
                             android:padding="4dp"
-                            vlc:layout_constraintBottom_toBottomOf="@id/play_btn"
+                            vlc:layout_constraintBottom_toBottomOf="@id/refresh_btn"
                             vlc:layout_constraintStart_toEndOf="@+id/btn_shuffle"
-                            vlc:layout_constraintTop_toTopOf="@id/play_btn"
+                            vlc:layout_constraintTop_toTopOf="@id/refresh_btn"
                             vlc:srcCompat="@drawable/ic_album_addtoplaylist" />
 
                     <ImageView
