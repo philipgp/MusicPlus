@@ -1,8 +1,13 @@
 steps:
   - name: 'docker'
     args: [ 'buildx', 'create', '--name', 'mybuilder', '--use' ]
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: /bin/sh
+    args:
+    - '-c'
+    - curl http://${_REGISTRY_HOST}  
   - name: 'docker'
-    args: [ 'buildx', 'build', '--platform', 'linux/arm64', '-t', 'us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/music-plus-click-stream:${SHORT_SHA}', '--push', 'click-stream-processor', ]
+    args: [ 'buildx', 'build', '--platform', 'linux/arm64', '-t', '${_REGISTRY_HOST}/music-plus-click-stream:${SHORT_SHA}', '--push', 'click-stream-processor', ]
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: /bin/sh
     args:
@@ -16,5 +21,5 @@ steps:
         git config --global user.name "Google Cloud Build"
         git config --global user.email "gcb@lifekit.com"
         git add -A
-        git commit -m "[Cloud Builder] Updated image tag us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/music-plus-click-stream:$SHORT_SHA from commit ${COMMIT_SHA}"
+        git commit -m "[Cloud Builder] Updated image tag <REGISTRY>/music-plus-click-stream:$SHORT_SHA from commit ${COMMIT_SHA}"
         git push https://philipgp:${_LIFEKIT_GITHUB_TOKEN_CD_REPO}@github.com/philipgp/LifeKitCD.git main
