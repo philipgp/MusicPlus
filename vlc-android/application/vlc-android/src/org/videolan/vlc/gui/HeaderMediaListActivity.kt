@@ -254,7 +254,7 @@ open class HeaderMediaListActivity : AudioPlayerContainerActivity(), IEventsHand
         val client = OkHttpClient.Builder()
             .readTimeout(15, TimeUnit.SECONDS)
             .connectTimeout(15, TimeUnit.SECONDS).build()
-        val request = Request.Builder().url("http://ml-predictor.organizer.lifekit.site/build-playlist").get().build()
+        val request = Request.Builder().url("http://ml-predictor.organizer.lifekit.online/build-playlist").get().build()
         val call = client.newCall(request)
         val response = call.execute()
         Log.i(TAG, "Response message :"+response.message+"--- status"+response.code)
