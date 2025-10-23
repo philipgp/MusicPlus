@@ -58,7 +58,7 @@ func connectToDB() {
 func saveProgressToDB(ctx context.Context, TrackProgress trackProgress) (int64, error) {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, fmt.Errorf("saveProgressToDB: %v", err)
+		return 0, fmt.Errorf("saveProgrjessToDB: %v", err)
 	}
 	defer tx.Rollback()
 	// log.Fatalf("Inserting data")
