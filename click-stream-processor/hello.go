@@ -78,8 +78,10 @@ func saveProgressToDB(ctx context.Context, TrackProgress trackProgress) (int64, 
 	return id, nil
 }
 func publishToPubSub(TrackProgress trackProgress) error {
+	fmt.Println("Publishing to pub/sub")
 	var projectID = os.Getenv("music_stream_project_id")
 	var topicID = os.Getenv("music_stream_topic_id")
+	fmt.Println("topic id is" + topicID)
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, projectID)
 	if err != nil {
@@ -131,11 +133,14 @@ func publishToPubSub(TrackProgress trackProgress) error {
 }
 
 func addProgress(c *gin.Context) {
+	fmt.Println("starting...")
 	var trackProgress trackProgress
 	if err := c.BindJSON(&trackProgress); err != nil {
+		fmt.Println(err)
 		return
 	}
-	publishToPubSub(trackProgress)
+	var pubres = publishToPubSub(trackProgress)
+	fmt.Println(pubres)
 	// writeToFile(trackProgress)
 	// ctx := context.TODO()
 	// saveProgressToDB(ctx, trackProgress)
