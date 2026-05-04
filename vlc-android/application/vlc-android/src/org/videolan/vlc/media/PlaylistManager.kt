@@ -1,6 +1,7 @@
 package org.videolan.vlc.media
 
 import android.content.Intent
+import android.media.AudioManager
 import android.net.Uri
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
@@ -389,7 +390,11 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
             val position = playerProgress.toFloat()
             val progressPercent = position/length*100
             val roundedProgress = progressPercent.roundToInt()
-            val json = "{\"album\":\"$album\",\"uri\":\"$path\",\"albumArtist\":\"$albumArtist\",\"title\":\"$title\",\"artist\":\"$artist\",\"fingerprint\":\"$calculatedHash\",\"progressPercent\":$roundedProgress}"
+            val audioManager = ctx.getSystemService(AudioManager::class.java)
+            val bluetoothDevice = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+                .firstOrNull { it.type == android.media.AudioDeviceInfo.TYPE_BLUETOOTH_A2DP }
+                ?.productName?.toString() ?: ""
+            val json = "{\"album\":\"$album\",\"uri\":\"$path\",\"albumArtist\":\"$albumArtist\",\"title\":\"$title\",\"artist\":\"$artist\",\"fingerprint\":\"$calculatedHash\",\"progressPercent\":$roundedProgress,\"bluetoothDevice\":\"$bluetoothDevice\"}"
             val body = json.toRequestBody("application/json".toMediaTypeOrNull())
             val request = Request.Builder().url(url).post(body).build()
             val call = client.newCall(request)
