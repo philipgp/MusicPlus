@@ -47,6 +47,10 @@
       "type": "string"
     },
     {
+      "name": "bluetoothDevice",
+      "type": "string"
+    },
+    {
       "name": "progressPercent",
       "type": "int"
     }
