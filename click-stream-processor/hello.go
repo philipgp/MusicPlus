@@ -31,6 +31,7 @@ type trackProgress struct {
 	AlbumArtist     string `json:"albumArtist"`
 	Artist          string `json:"artist"`
 	Album           string `json:"album"`
+	BluetoothDevice           string `json:"bluetoothDevice"`
 }
 
 func connectToDB() {
@@ -96,7 +97,7 @@ func publishToPubSub(TrackProgress trackProgress) error {
 		return fmt.Errorf("goavro.NewCodec err: %w", err)
 	}
 
-	record := map[string]interface{}{"fingerprint": TrackProgress.FingerPrint, "uid": TrackProgress.UID, "event": "", "startTime": "", "endTime": "", "eventTime": "", "title": TrackProgress.Title, "uri": "", "albumArtist": "", "artist": TrackProgress.Artist, "album": TrackProgress.Album, "progressPercent": TrackProgress.ProgressPercent}
+	record := map[string]interface{}{"fingerprint": TrackProgress.FingerPrint, "uid": TrackProgress.UID, "event": "", "startTime": "", "endTime": "", "eventTime": "", "title": TrackProgress.Title, "uri": "", "albumArtist": "", "artist": TrackProgress.Artist, "album": TrackProgress.Album, "progressPercent": TrackProgress.ProgressPercent,"bluetoothDevice": TrackProgress.BluetoothDevice}
 	t := client.Topic(topicID)
 	cfg, err := t.Config(ctx)
 	if err != nil {
