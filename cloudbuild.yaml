@@ -1,12 +1,16 @@
 steps:
   - name: 'docker'
     args: [ 'buildx', 'create', '--name', 'mybuilder', '--use' ]
+    env:
+      - 'DOCKER_API_VERSION=1.41'
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: /bin/sh
     args:
     - '-c'
     - curl http://${_REGISTRY_HOST}  
   - name: 'docker'
+    env:
+      - 'DOCKER_API_VERSION=1.41'
     args: [ 'buildx', 'build', '--platform', 'linux/arm64', '-t', '${_REGISTRY_HOST}/music-plus-click-stream:${SHORT_SHA}', '--push', 'click-stream-processor', ]
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: /bin/sh
