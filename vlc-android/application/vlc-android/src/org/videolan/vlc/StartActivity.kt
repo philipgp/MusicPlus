@@ -94,7 +94,7 @@ class StartActivity : FragmentActivity() {
             val action = intent?.action
             if (!action.isNullOrEmpty()) {
                 return when (action) {
-                    "vlc.shortcut.video" -> R.id.nav_video
+
                     "vlc.shortcut.audio" -> R.id.nav_audio
                     "vlc.shortcut.browser" -> R.id.nav_directories
                     "vlc.shortcut.resume" -> R.id.ml_menu_last_playlist

@@ -51,7 +51,7 @@ private const val TAG = "Navigator"
 
 class Navigator : NavigationBarView.OnItemSelectedListener, DefaultLifecycleObserver, INavigator {
 
-    private val defaultFragmentId = R.id.nav_video
+    private val defaultFragmentId = R.id.nav_audio
     override var currentFragmentId: Int = 0
     private var currentFragment: Fragment? = null
         private set
