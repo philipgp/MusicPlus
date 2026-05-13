@@ -33,6 +33,7 @@ func setupTelemetry(ctx context.Context) func(context.Context) {
 		resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceName(serviceName()),
+			semconv.ServiceNamespace(os.Getenv("OTEL_SERVICE_NAMESPACE")),
 		),
 	)
 
