@@ -375,7 +375,7 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
 
     fun sendForAnalytics(playerProgress: Long, currentMedia: MediaWrapper?){
         try {
-            val url = URL("http://musick.lifekit.online/progress")
+            val url = URL("http://musick.lifekit.cloud/progress")
             val client = OkHttpClient.Builder()
                 .readTimeout(10, TimeUnit.SECONDS)
                 .connectTimeout(5, TimeUnit.SECONDS).build()
