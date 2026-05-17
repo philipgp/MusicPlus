@@ -42,11 +42,12 @@ type trackProgress struct {
 
 func connectToDB() {
 	cfg := mysql.Config{
-		User:   os.Getenv("MY_SQL_USERNAME"),
-		Passwd: os.Getenv("MY_SQL_PASSWORD"),
-		Net:    "tcp",
-		Addr:   os.Getenv("MY_SQL_URL"),
-		DBName: "musick",
+		User:                 os.Getenv("MY_SQL_USERNAME"),
+		Passwd:               os.Getenv("MY_SQL_PASSWORD"),
+		Net:                  "tcp",
+		Addr:                 os.Getenv("MY_SQL_URL"),
+		DBName:               "musick",
+		AllowNativePasswords: true,
 	}
 	var err error
 	db, err = sql.Open("mysql", cfg.FormatDSN())
