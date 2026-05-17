@@ -71,6 +71,7 @@ func saveProgressToDB(ctx context.Context, tp trackProgress) (int64, error) {
 		attribute.String("track.title", tp.Title),
 	)
 
+	slog.InfoContext(ctx, "saveProgressToDB: beginning transaction")
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		span.RecordError(err)
@@ -79,6 +80,8 @@ func saveProgressToDB(ctx context.Context, tp trackProgress) (int64, error) {
 	}
 	defer tx.Rollback()
 
+	slog.InfoContext(ctx, "saveProgressToDB: executing insert", "uid", tp.UID, "title", tp.Title)
+	queryStart := time.Now()
 	result, err := db.ExecContext(ctx,
 		"INSERT INTO track_play_progress (uid,fingerprint,progressPercent,album,artist,title,albumArtist) VALUES (?, ?, ?,?,?,?,?)",
 		tp.UID, tp.FingerPrint, tp.ProgressPercent, tp.Album, tp.Artist, tp.Title, tp.AlbumArtist,
@@ -86,21 +89,26 @@ func saveProgressToDB(ctx context.Context, tp trackProgress) (int64, error) {
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
+		slog.ErrorContext(ctx, "saveProgressToDB: insert failed", "error", err, "duration_ms", time.Since(queryStart).Milliseconds())
 		return 0, fmt.Errorf("saveProgressToDB: %v", err)
 	}
+	slog.InfoContext(ctx, "saveProgressToDB: insert succeeded", "duration_ms", time.Since(queryStart).Milliseconds())
+
 	id, err := result.LastInsertId()
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return 0, fmt.Errorf("saveProgressToDB: %v", err)
 	}
+	slog.InfoContext(ctx, "saveProgressToDB: committing transaction", "id", id)
 	if err = tx.Commit(); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
+		slog.ErrorContext(ctx, "saveProgressToDB: commit failed", "error", err)
 		return 0, fmt.Errorf("saveProgressToDB: %v", err)
 	}
 
-	slog.InfoContext(ctx, "progress saved to db", "id", id, "uid", tp.UID, "title", tp.Title)
+	slog.InfoContext(ctx, "saveProgressToDB: completed", "id", id, "uid", tp.UID, "title", tp.Title)
 	return id, nil
 }
 
@@ -118,8 +126,23 @@ func publishToPubSub(ctx context.Context, tp trackProgress) error {
 		attribute.String("track.uid", tp.UID),
 	)
 
-	slog.InfoContext(ctx, "publishing to pub/sub", "topic", topicID, "title", tp.Title, "uid", tp.UID)
+	slog.InfoContext(ctx, "publishToPubSub: starting",
+		"project_id", projectID,
+		"topic_id", topicID,
+		"title", tp.Title,
+		"uid", tp.UID,
+	)
 
+	if projectID == "" {
+		slog.ErrorContext(ctx, "publishToPubSub: music_stream_project_id env var is empty")
+		return fmt.Errorf("music_stream_project_id is not set")
+	}
+	if topicID == "" {
+		slog.ErrorContext(ctx, "publishToPubSub: music_stream_topic_id env var is empty")
+		return fmt.Errorf("music_stream_topic_id is not set")
+	}
+
+	slog.InfoContext(ctx, "publishToPubSub: creating pubsub client")
 	client, err := pubsub.NewClient(ctx, projectID)
 	if err != nil {
 		span.RecordError(err)
@@ -127,6 +150,7 @@ func publishToPubSub(ctx context.Context, tp trackProgress) error {
 		return fmt.Errorf("pubsub.NewClient: %w", err)
 	}
 	defer client.Close()
+	slog.InfoContext(ctx, "publishToPubSub: pubsub client created")
 
 	avroSource, err := os.ReadFile("schema.avsc")
 	if err != nil {
@@ -134,12 +158,15 @@ func publishToPubSub(ctx context.Context, tp trackProgress) error {
 		span.SetStatus(codes.Error, err.Error())
 		return fmt.Errorf("os.ReadFile err: %w", err)
 	}
+	slog.InfoContext(ctx, "publishToPubSub: avro schema loaded")
+
 	codec, err := goavro.NewCodec(string(avroSource))
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return fmt.Errorf("goavro.NewCodec err: %w", err)
 	}
+	slog.InfoContext(ctx, "publishToPubSub: avro codec created")
 
 	record := map[string]interface{}{
 		"fingerprint":     tp.FingerPrint,
@@ -158,12 +185,14 @@ func publishToPubSub(ctx context.Context, tp trackProgress) error {
 	}
 
 	t := client.Topic(topicID)
+	slog.InfoContext(ctx, "publishToPubSub: fetching topic config")
 	cfg, err := t.Config(ctx)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return fmt.Errorf("topic.Config err: %w", err)
 	}
+	slog.InfoContext(ctx, "publishToPubSub: topic config fetched", "encoding", cfg.SchemaSettings.Encoding)
 
 	var msg []byte
 	switch cfg.SchemaSettings.Encoding {
@@ -179,7 +208,9 @@ func publishToPubSub(ctx context.Context, tp trackProgress) error {
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
+	slog.InfoContext(ctx, "publishToPubSub: message encoded", "size_bytes", len(msg))
 
+	slog.InfoContext(ctx, "publishToPubSub: publishing message")
 	result := t.Publish(ctx, &pubsub.Message{Data: msg})
 	msgID, err := result.Get(ctx)
 	if err != nil {
@@ -188,20 +219,22 @@ func publishToPubSub(ctx context.Context, tp trackProgress) error {
 		return fmt.Errorf("result.Get: %w", err)
 	}
 
-	slog.InfoContext(ctx, "published to pub/sub", "message_id", msgID, "topic", topicID)
+	slog.InfoContext(ctx, "publishToPubSub: published successfully", "message_id", msgID, "topic", topicID)
 	return nil
 }
 
 func addProgress(c *gin.Context) {
 	ctx := c.Request.Context()
+	start := time.Now()
+	slog.InfoContext(ctx, "addProgress: request received")
 
 	var tp trackProgress
 	if err := c.BindJSON(&tp); err != nil {
-		slog.WarnContext(ctx, "invalid request body", "error", err)
+		slog.WarnContext(ctx, "addProgress: failed to parse request body", "error", err)
 		return
 	}
 
-	slog.InfoContext(ctx, "handling progress event",
+	slog.InfoContext(ctx, "addProgress: parsed request body",
 		"uid", tp.UID,
 		"title", tp.Title,
 		"artist", tp.Artist,
@@ -209,12 +242,19 @@ func addProgress(c *gin.Context) {
 		"bluetooth_device", tp.BluetoothDevice,
 	)
 
+	slog.InfoContext(ctx, "addProgress: calling publishToPubSub")
+	pubStart := time.Now()
 	if err := publishToPubSub(ctx, tp); err != nil {
-		slog.ErrorContext(ctx, "failed to publish to pub/sub", "error", err)
+		slog.ErrorContext(ctx, "addProgress: publishToPubSub failed",
+			"error", err,
+			"duration_ms", time.Since(pubStart).Milliseconds(),
+		)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	slog.InfoContext(ctx, "addProgress: publishToPubSub succeeded", "duration_ms", time.Since(pubStart).Milliseconds())
 
+	slog.InfoContext(ctx, "addProgress: request completed", "total_duration_ms", time.Since(start).Milliseconds())
 	c.IndentedJSON(http.StatusCreated, tp)
 }
 
