@@ -108,7 +108,7 @@ func publishToPubSub(ctx context.Context, tp trackProgress) error {
 	defer span.End()
 
 	projectID := os.Getenv("music_stream_project_id")
-	topicID   := os.Getenv("music_stream_topic_id")
+	topicID := os.Getenv("music_stream_topic_id")
 	span.SetAttributes(
 		attribute.String("messaging.system", "pubsub"),
 		attribute.String("messaging.destination", topicID),
@@ -219,8 +219,8 @@ func addProgress(c *gin.Context) {
 
 func writeToFile(tp trackProgress) {
 	directory := os.Getenv("base_directory")
-	fileName  := time.Now().Format("20060102150405")
-	file      := directory + fileName + ".log"
+	fileName := time.Now().Format("20060102150405")
+	file := directory + fileName + ".log"
 
 	b, err := json.Marshal(tp)
 	if err != nil {
@@ -237,8 +237,38 @@ func writeToFile(tp trackProgress) {
 func playlist_getAll(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
 }
+func playlist_getM3U(c *gin.Context) {
+	uid := c.Param("uid")
+
+	playlist_items, err := getPlaylistItems(uid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	m3u, err := Generate(playlist_items)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.String(http.StatusOK, m3u)
+}
+
+func playlist_addSong(c *gin.Context) {
+	uid := c.Param("uid")       // path parameter
+	title := c.Query("title")   // ?limit=50
+	artist := c.Query("artist") // ?shuffle=true
+	playlist := Playlist{uid: uid}
+	track := Track{artist: artist, title: title}
+	added, err := add(playlist, track)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"added": added})
+}
 
 func main() {
+	connectToDB()
 	ctx := context.Background()
 	shutdown := setupTelemetry(ctx)
 	defer shutdown(ctx)
@@ -249,5 +279,7 @@ func main() {
 	router.Use(otelgin.Middleware(serviceName()))
 	router.POST("/progress", addProgress)
 	router.POST("/playlist/get", playlist_getAll)
+	router.GET("/playlist/m3u/:uid", playlist_getM3U)
+	router.POST("/playlist/:uid/song", playlist_addSong)
 	router.Run(":8080")
 }
