@@ -104,7 +104,7 @@ func Generate(playlistitems []PlaylistItem) (string, error) {
 	for _, item := range playlistitems {
 		sb.WriteString("#EXTINF\n")
 		idx := strings.Index(item.track.path, "/music/")
-		filepath := item.track.path[idx+1:]
+		filepath := item.track.path[idx+7:]
 		sb.WriteString(filepath + "\n")
 	}
 	return sb.String(), nil
