@@ -278,6 +278,15 @@ func writeToFile(tp trackProgress) {
 func playlist_getAll(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
 }
+
+func playlist_clear(c *gin.Context) {
+	uid := c.Param("uid")
+	if err := clear(uid); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"cleared": uid})
+}
 func playlist_getM3U(c *gin.Context) {
 	uid := c.Param("uid")
 
@@ -322,5 +331,6 @@ func main() {
 	router.POST("/playlist/get", playlist_getAll)
 	router.GET("/playlist/m3u/:uid", playlist_getM3U)
 	router.POST("/playlist/:uid/song", playlist_addSong)
+	router.DELETE("/playlist/:uid/songs", playlist_clear)
 	router.Run(":8080")
 }

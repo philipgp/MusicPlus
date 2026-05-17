@@ -72,6 +72,18 @@ func getPlaylistItems(uid string) ([]PlaylistItem, error) {
 
 //
 
+func clear(uid string) error {
+	slog.Info("clear: deleting all items in playlist", "uid", uid)
+	start := time.Now()
+	_, err := db.Exec("DELETE FROM playlist_track WHERE playlist_id = (SELECT id FROM playlist WHERE uid = ?)", uid)
+	if err != nil {
+		slog.Error("clear: delete failed", "error", err, "duration_ms", time.Since(start).Milliseconds())
+		return fmt.Errorf("clear: %v", err)
+	}
+	slog.Info("clear: completed", "uid", uid, "duration_ms", time.Since(start).Milliseconds())
+	return nil
+}
+
 func getAll() ([]Playlist, error) {
 	slog.Info("getAll: querying all playlists")
 	start := time.Now()
