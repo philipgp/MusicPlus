@@ -290,12 +290,17 @@ func playlist_clear(c *gin.Context) {
 func playlist_getM3U(c *gin.Context) {
 	uid := c.Param("uid")
 
+	playlistDetail, err := getPlaylistDetail(uid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	playlist_items, err := getPlaylistItems(uid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	m3u, err := Generate(playlist_items)
+	m3u, err := Generate(playlistDetail, playlist_items)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

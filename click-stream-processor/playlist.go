@@ -39,7 +39,19 @@ func add(playlist Playlist, track Track) (int64, error) {
 	slog.Info("add: insert succeeded", "id", id, "duration_ms", time.Since(start).Milliseconds())
 	return id, nil
 }
-
+func getPlaylistDetail(uid string) (Playlist, error) {
+	slog.Info("getPlaylistItems: querying", "uid", uid)
+	start := time.Now()
+	playlist := Playlist{}
+	row := db.QueryRow("SELECT name,uid FROM playlist where  uid=?", uid)
+	err := row.Scan(&playlist.name, &playlist.uid)
+	if err != nil {
+		slog.Error("getPlaylistItems: query failed", "error", err, "duration_ms", time.Since(start).Milliseconds())
+		return playlist, fmt.Errorf("getPlaylistItems: %v", err)
+	}
+	slog.Info("getPlaylistItems: completed", "uid", uid, "duration_ms", time.Since(start).Milliseconds())
+	return playlist, nil
+}
 func getPlaylistItems(uid string) ([]PlaylistItem, error) {
 	slog.Info("getPlaylistItems: querying", "uid", uid)
 	start := time.Now()
@@ -109,10 +121,10 @@ func getAll() ([]Playlist, error) {
 	slog.Info("getAll: completed", "count", len(playlists), "duration_ms", time.Since(start).Milliseconds())
 	return playlists, nil
 }
-func Generate(playlistitems []PlaylistItem) (string, error) {
+func Generate(playlist Playlist, playlistitems []PlaylistItem) (string, error) {
 	var sb strings.Builder
 	sb.WriteString("#EXTM3U\n")
-	sb.WriteString(fmt.Sprintf("#PLAYLIST:%s\n", "Auto-generated playlist"))
+	sb.WriteString(fmt.Sprintf("#PLAYLIST:%s\n", playlist.name))
 	for _, item := range playlistitems {
 		sb.WriteString("#EXTINF\n")
 		idx := strings.Index(item.track.path, "/music/")
