@@ -39,6 +39,9 @@ import android.util.Log
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import androidx.lifecycle.*
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ActorScope
 import kotlinx.coroutines.channels.Channel
@@ -193,6 +196,7 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
             ACTION_DISCOVER -> intent.getStringExtra(EXTRA_PATH)?.let { discover(it) }
             ACTION_DISCOVER_DEVICE -> intent.getStringExtra(EXTRA_PATH)?.let { discoverStorage(it) }
             ACTION_CHECK_STORAGES -> if (settings.getInt(KEY_MEDIALIBRARY_SCAN, -1) != ML_SCAN_OFF) actions.trySend(UpdateStorages) else exitCommand()
+            ACTION_SYNC_PLAYLISTS -> actions.trySend(SyncPlaylists)
             else -> {
                 exitCommand()
                 return START_NOT_STICKY
@@ -446,6 +450,31 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
         if (reload <= 0) exitCommand()
     }
 
+    private suspend fun syncPlaylists() {
+        try {
+            val listConn = URL("http://musick.lifekit.cloud/playlist/get").openConnection() as HttpURLConnection
+            listConn.requestMethod = "GET"
+            val listJson = listConn.inputStream.bufferedReader().readText()
+            listConn.disconnect()
+
+            val playlists = org.json.JSONObject(listJson).getJSONArray("items")
+            val dir = getExternalFilesDir("playlists") ?: filesDir
+
+            for (i in 0 until playlists.length()) {
+                val uid = playlists.getJSONObject(i).getString("uid")
+                val m3uConn = URL("http://musick.lifekit.cloud/playlist/m3u/$uid").openConnection() as HttpURLConnection
+                m3uConn.requestMethod = "GET"
+                val m3uContent = m3uConn.inputStream.bufferedReader().readText()
+                m3uConn.disconnect()
+
+                File(dir, "$uid.m3u").writeText(m3uContent)
+                Log.d(TAG, "syncPlaylists: saved $uid.m3u to ${dir.absolutePath}")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "syncPlaylists failed", e)
+        }
+    }
+
     private fun exitCommand() {
         if (!medialibrary.isWorking && !serviceLock && !discoverTriggered) {
             lastNotificationTime = 0L
@@ -528,6 +557,7 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
             UpdateStorages -> updateStorages()
             is Reload -> reload(action.path)
             ForceReload -> medialibrary.forceRescan()
+            SyncPlaylists -> syncPlaylists()
         }
     }
 
@@ -554,6 +584,7 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
         get() = dispatcher.lifecycle
 
     companion object {
+        const val ACTION_SYNC_PLAYLISTS = "org.videolan.vlc.action.SYNC_PLAYLISTS"
         val progress = MutableLiveData<ScanProgress?>()
         val discoveryError = MutableLiveData<DiscoveryError>()
         val newStorages = MutableLiveData<MutableList<String>>()
@@ -580,6 +611,7 @@ private class StartScan(val upgrade: Boolean) : MLAction()
 private object UpdateStorages : MLAction()
 private class Reload(val path: String?) : MLAction()
 private object ForceReload : MLAction()
+private object SyncPlaylists : MLAction()
 
 private sealed class Notification
 private class Show(val done:Int, val scheduled:Int) : Notification()
