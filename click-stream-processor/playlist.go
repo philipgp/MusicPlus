@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -64,10 +65,12 @@ func getPlaylistItems(uid string) ([]PlaylistItem, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var playlistItem PlaylistItem
-		if err := rows.Scan(&playlistItem.Track.Title, &playlistItem.Track.Artist, &playlistItem.Track.Album, &playlistItem.Track.Path); err != nil {
+		var album sql.NullString
+		if err := rows.Scan(&playlistItem.Track.Title, &playlistItem.Track.Artist, &album, &playlistItem.Track.Path); err != nil {
 			slog.Error("getPlaylistItems: scan failed", "error", err)
 			return nil, fmt.Errorf("getPlaylistItems scan: %v", err)
 		}
+		playlistItem.Track.Album = album.String
 		playlistItems = append(playlistItems, playlistItem)
 	}
 	if err := rows.Err(); err != nil {
