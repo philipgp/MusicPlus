@@ -33,6 +33,7 @@ import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.Binder
 import android.os.Build
+import android.os.Environment
 import android.os.Environment.DIRECTORY_MUSIC
 import android.os.IBinder
 import android.os.PowerManager
@@ -66,6 +67,8 @@ import org.videolan.vlc.gui.helpers.NotificationHelper
 import org.videolan.vlc.repository.DirectoryRepository
 import org.videolan.vlc.util.*
 import org.videolan.vlc.util.FileUtils
+import java.io.FileOutputStream
+import kotlin.text.toByteArray
 
 private const val TAG = "VLC/MediaParsingService"
 
@@ -459,17 +462,25 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
             listConn.disconnect()
 
             val playlists = org.json.JSONObject(listJson).getJSONArray("items")
+
             val dir = getExternalFilesDir(DIRECTORY_MUSIC) ?: filesDir
 
             for (i in 0 until playlists.length()) {
+                try{
                 val uid = playlists.getJSONObject(i).getString("uid")
                 val m3uConn = URL("http://musick.lifekit.cloud/playlist/m3u/$uid").openConnection() as HttpURLConnection
                 m3uConn.requestMethod = "GET"
                 val m3uContent = m3uConn.inputStream.bufferedReader().readText()
                 m3uConn.disconnect()
-
-                File(dir, "$uid.m3u").writeText(m3uContent)
+                val file =  File(Environment.getExternalStoragePublicDirectory(DIRECTORY_MUSIC).path+"/$uid.m3u")
+//                File(dir, "$uid.m3u").writeText(m3uContent)
+                FileOutputStream(file).use { output ->
+                    output.write(m3uContent.toByteArray())
+                }
                 Log.d(TAG, "syncPlaylists: saved $uid.m3u to ${dir.absolutePath}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "syncPlaylists failed"+playlists.getJSONObject(i), e)
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "syncPlaylists failed", e)
