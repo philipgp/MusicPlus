@@ -33,6 +33,7 @@ import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.Binder
 import android.os.Build
+import android.os.Environment.DIRECTORY_MUSIC
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
@@ -458,7 +459,7 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
             listConn.disconnect()
 
             val playlists = org.json.JSONObject(listJson).getJSONArray("items")
-            val dir = getExternalFilesDir("playlists") ?: filesDir
+            val dir = getExternalFilesDir(DIRECTORY_MUSIC) ?: filesDir
 
             for (i in 0 until playlists.length()) {
                 val uid = playlists.getJSONObject(i).getString("uid")
@@ -516,6 +517,7 @@ class MediaParsingService : LifecycleService(), DevicesDiscoveryCb {
 
     @OptIn(ObsoleteCoroutinesApi::class)
     private suspend fun ActorScope<MLAction>.processAction() {
+        syncPlaylists()
         for (action in channel) when (action) {
             is DiscoverStorage -> {
                 for (folder in Medialibrary.getBanList()) medialibrary.banFolder(action.path + folder)
