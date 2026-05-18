@@ -276,7 +276,12 @@ func writeToFile(tp trackProgress) {
 }
 
 func playlist_getAll(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+	playlists, err := getAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"items": playlists})
 }
 
 func playlist_clear(c *gin.Context) {
@@ -312,8 +317,8 @@ func playlist_addSong(c *gin.Context) {
 	uid := c.Param("uid")       // path parameter
 	title := c.Query("title")   // ?limit=50
 	artist := c.Query("artist") // ?shuffle=true
-	playlist := Playlist{uid: uid}
-	track := Track{artist: artist, title: title}
+	playlist := Playlist{UID: uid}
+	track := Track{Artist: artist, Title: title}
 	added, err := add(playlist, track)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -333,7 +338,7 @@ func main() {
 	router := gin.Default()
 	router.Use(otelgin.Middleware(serviceName()))
 	router.POST("/progress", addProgress)
-	router.POST("/playlist/get", playlist_getAll)
+	router.GET("/playlist/get", playlist_getAll)
 	router.GET("/playlist/m3u/:uid", playlist_getM3U)
 	router.POST("/playlist/:uid/song", playlist_addSong)
 	router.DELETE("/playlist/:uid/songs", playlist_clear)

@@ -8,26 +8,26 @@ import (
 )
 
 type Playlist struct {
-	items []PlaylistItem
-	name  string
-	uid   string
+	Items []PlaylistItem `json:"items"`
+	Name  string         `json:"name"`
+	UID   string         `json:"uid"`
 }
 
 type PlaylistItem struct {
-	track Track
+	Track Track `json:"track"`
 }
 
 type Track struct {
-	title  string
-	artist string
-	album  string
-	path   string
+	Title  string `json:"title"`
+	Artist string `json:"artist"`
+	Album  string `json:"album"`
+	Path   string `json:"path"`
 }
 
 func add(playlist Playlist, track Track) (int64, error) {
-	slog.Info("add: inserting track into playlist", "playlist_uid", playlist.uid, "title", track.title, "artist", track.artist)
+	slog.Info("add: inserting track into playlist", "playlist_uid", playlist.UID, "title", track.Title, "artist", track.Artist)
 	start := time.Now()
-	result, err := db.Exec(" INSERT INTO playlist_track (playlist_id, track_id) SELECT (SELECT id FROM playlist WHERE uid = ?),  (SELECT id FROM tracks WHERE title = ? and artist = ?);", playlist.uid, track.title, track.artist)
+	result, err := db.Exec(" INSERT INTO playlist_track (playlist_id, track_id) SELECT (SELECT id FROM playlist WHERE uid = ?),  (SELECT id FROM tracks WHERE title = ? and artist = ?);", playlist.UID, track.Title, track.Artist)
 	if err != nil {
 		slog.Error("add: insert failed", "error", err, "duration_ms", time.Since(start).Milliseconds())
 		return 0, fmt.Errorf("addAlbum: %v", err)
@@ -44,7 +44,7 @@ func getPlaylistDetail(uid string) (Playlist, error) {
 	start := time.Now()
 	playlist := Playlist{}
 	row := db.QueryRow("SELECT name,uid FROM playlist where  uid=?", uid)
-	err := row.Scan(&playlist.name, &playlist.uid)
+	err := row.Scan(&playlist.Name, &playlist.UID)
 	if err != nil {
 		slog.Error("getPlaylistItems: query failed", "error", err, "duration_ms", time.Since(start).Milliseconds())
 		return playlist, fmt.Errorf("getPlaylistItems: %v", err)
@@ -64,7 +64,7 @@ func getPlaylistItems(uid string) ([]PlaylistItem, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var playlistItem PlaylistItem
-		if err := rows.Scan(&playlistItem.track.title, &playlistItem.track.artist, &playlistItem.track.album, &playlistItem.track.path); err != nil {
+		if err := rows.Scan(&playlistItem.Track.Title, &playlistItem.Track.Artist, &playlistItem.Track.Album, &playlistItem.Track.Path); err != nil {
 			slog.Error("getPlaylistItems: scan failed", "error", err)
 			return nil, fmt.Errorf("getPlaylistItems scan: %v", err)
 		}
@@ -108,7 +108,7 @@ func getAll() ([]Playlist, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var playlist Playlist
-		if err := rows.Scan(&playlist.name, &playlist.uid); err != nil {
+		if err := rows.Scan(&playlist.Name, &playlist.UID); err != nil {
 			slog.Error("getAll: scan failed", "error", err)
 			return nil, fmt.Errorf("getAll scan: %v", err)
 		}
@@ -124,11 +124,11 @@ func getAll() ([]Playlist, error) {
 func Generate(playlist Playlist, playlistitems []PlaylistItem) (string, error) {
 	var sb strings.Builder
 	sb.WriteString("#EXTM3U\n")
-	sb.WriteString(fmt.Sprintf("#PLAYLIST:%s\n", playlist.name))
+	sb.WriteString(fmt.Sprintf("#PLAYLIST:%s\n", playlist.Name))
 	for _, item := range playlistitems {
 		sb.WriteString("#EXTINF\n")
-		idx := strings.Index(item.track.path, "/music/")
-		filepath := item.track.path[idx+7:]
+		idx := strings.Index(item.Track.Path, "/music/")
+		filepath := item.Track.Path[idx+7:]
 		sb.WriteString(filepath + "\n")
 	}
 	return sb.String(), nil
