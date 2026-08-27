@@ -1,5 +1,5 @@
-# Build stage runs on the native Cloud Build machine (x86_64).
-# $BUILDPLATFORM is injected by BuildKit — keeps this stage off QEMU.
+# Build stage runs on the native build machine (x86_64). $BUILDPLATFORM is
+# injected by BuildKit — keeps this stage off QEMU.
 FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
 
 WORKDIR /app
@@ -9,11 +9,14 @@ RUN go mod download
 
 COPY . .
 
-# BuildKit populates TARGETOS/TARGETARCH from the --platform flag passed by
-# Cloud Build (linux/arm64). CGO_ENABLED=0 produces a fully static binary
-# that requires no libc — required for distroless/static.
+# CGO_ENABLED=0 produces a fully static binary that requires no libc —
+# required for distroless/static.
+# amd64 everywhere since the arm64 OCI Ampere box is gone. Azure Container Apps
+# is amd64-only, and building arm64 is what made the earlier direct-to-App-Service
+# attempt fail: the image started and exited immediately. BuildKit overrides these
+# when --platform is passed.
 ARG TARGETOS=linux
-ARG TARGETARCH=arm64
+ARG TARGETARCH=amd64
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -ldflags="-w -s" -o /app/server ./...
 
